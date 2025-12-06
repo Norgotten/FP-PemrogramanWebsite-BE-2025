@@ -2,10 +2,13 @@
 /* eslint-disable import/no-default-export */
 import { Router } from 'express';
 
+import { crosswordRouter } from './crossword/crossword.router';
 import { QuizController } from './quiz/quiz.controller';
 
 const GameListRouter = Router();
 
 GameListRouter.use('/quiz', QuizController);
+
+GameListRouter.use('/crossword', crosswordRouter);
 
 export default GameListRouter;
