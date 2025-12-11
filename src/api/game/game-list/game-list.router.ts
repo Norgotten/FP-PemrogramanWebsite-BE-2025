@@ -2,15 +2,14 @@
 /* eslint-disable import/no-default-export */
 import { Router } from 'express';
 
-import { crosswordRouter } from './crossword/crossword.router';
+import { CrosswordController } from './crossword/crossword.controller';
 import { PairOrNoPairController } from './pair-or-no-pair/pair-or-no-pair.controller';
 import { QuizController } from './quiz/quiz.controller';
 
 const GameListRouter = Router();
 
 GameListRouter.use('/quiz', QuizController);
-
-GameListRouter.use('/crossword', crosswordRouter);
+GameListRouter.use('/crossword', CrosswordController);
 GameListRouter.use('/pair-or-no-pair', PairOrNoPairController);
 
 export default GameListRouter;

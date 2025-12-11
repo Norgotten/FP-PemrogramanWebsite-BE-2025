@@ -1,207 +1,336 @@
-import { type ICrosswordGameData } from '../../../../common/interface/games/crossword.interface';
+import { type Prisma, type ROLE } from '@prisma/client';
+import { StatusCodes } from 'http-status-codes';
+import { v4 as uuidv4 } from 'uuid';
 
-export class CrosswordService {
-  getGameData(): ICrosswordGameData {
-    return {
-      title: 'Crossword F1 Edition',
-      grid_rows: 10,
-      grid_cols: 10,
-      cells: [
-        // --- BARIS 0 ---
-        { x: 0, y: 0, is_black: true },
-        { x: 1, y: 0, is_black: true },
-        { x: 2, y: 0, is_black: true },
-        { x: 3, y: 0, is_black: true },
-        { x: 4, y: 0, is_black: true },
-        { x: 5, y: 0, is_black: true },
-        { x: 6, y: 0, is_black: true },
-        { x: 7, y: 0, is_black: true },
-        { x: 8, y: 0, is_black: false, number: 4, value: undefined }, // Awal CHECO
-        { x: 9, y: 0, is_black: true },
+import { ErrorResponse, prisma } from '@/common';
+import {
+  type ICrosswordJson,
+  type ICrosswordPlayData,
+} from '@/common/interface/games/crossword.interface';
+import { FileManager } from '@/utils';
 
-        // --- BARIS 1 ---
-        { x: 0, y: 1, is_black: true },
-        { x: 1, y: 1, is_black: false, number: 5, value: undefined }, // Awal FERRARI
-        { x: 2, y: 1, is_black: true },
-        { x: 3, y: 1, is_black: true },
-        { x: 4, y: 1, is_black: true },
-        { x: 5, y: 1, is_black: true },
-        { x: 6, y: 1, is_black: true },
-        { x: 7, y: 1, is_black: true },
-        { x: 8, y: 1, is_black: false, value: undefined },
-        { x: 9, y: 1, is_black: true },
+import {
+  type ICheckCrosswordAnswer,
+  type ICreateCrossword,
+  type IUpdateCrossword,
+} from './schema';
 
-        // --- BARIS 2 (VERSTAPPEN) ---
-        { x: 0, y: 2, is_black: false, number: 1, value: undefined }, // Awal VERSTAPPEN
-        { x: 1, y: 2, is_black: false, value: undefined },
-        { x: 2, y: 2, is_black: false, value: undefined },
-        { x: 3, y: 2, is_black: false, value: undefined },
-        { x: 4, y: 2, is_black: false, number: 6, value: undefined }, // Awal TOTO
-        { x: 5, y: 2, is_black: false, value: undefined },
-        { x: 6, y: 2, is_black: false, value: undefined },
-        { x: 7, y: 2, is_black: false, value: undefined },
-        { x: 8, y: 2, is_black: false, value: undefined },
-        { x: 9, y: 2, is_black: false, value: undefined },
+export abstract class CrosswordService {
+  private static gameSlug = 'crossword';
 
-        // --- BARIS 3 ---
-        { x: 0, y: 3, is_black: true },
-        { x: 1, y: 3, is_black: false, value: undefined },
-        { x: 2, y: 3, is_black: true },
-        { x: 3, y: 3, is_black: true },
-        { x: 4, y: 3, is_black: false, value: undefined },
-        { x: 5, y: 3, is_black: true },
-        { x: 6, y: 3, is_black: true },
-        { x: 7, y: 3, is_black: true },
-        { x: 8, y: 3, is_black: false, value: undefined },
-        { x: 9, y: 3, is_black: true },
+  // --- UTILS ---
+  private static async getGameTemplateId() {
+    const template = await prisma.gameTemplates.findUnique({
+      where: { slug: this.gameSlug },
+      select: { id: true },
+    });
 
-        // --- BARIS 4 (MOM) ---
-        { x: 0, y: 4, is_black: true },
-        { x: 1, y: 4, is_black: false, value: undefined },
-        { x: 2, y: 4, is_black: true },
-        { x: 3, y: 4, is_black: true },
-        { x: 4, y: 4, is_black: false, value: undefined },
-        { x: 5, y: 4, is_black: true },
-        { x: 6, y: 4, is_black: true },
-        { x: 7, y: 4, is_black: false, number: 2, value: undefined }, // Awal MOM
-        { x: 8, y: 4, is_black: false, value: undefined },
-        { x: 9, y: 4, is_black: false, value: undefined },
+    if (!template) {
+      throw new ErrorResponse(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Crossword template not found',
+      );
+    }
 
-        // --- BARIS 5 ---
-        { x: 0, y: 5, is_black: true },
-        { x: 1, y: 5, is_black: false, value: undefined },
-        { x: 2, y: 5, is_black: true },
-        { x: 3, y: 5, is_black: true },
-        { x: 4, y: 5, is_black: false, value: undefined },
-        { x: 5, y: 5, is_black: true },
-        { x: 6, y: 5, is_black: true },
-        { x: 7, y: 5, is_black: true },
-        { x: 8, y: 5, is_black: true },
-        { x: 9, y: 5, is_black: true },
+    return template.id;
+  }
 
-        // --- BARIS 6 ---
-        { x: 0, y: 6, is_black: true },
-        { x: 1, y: 6, is_black: false, value: undefined },
-        { x: 2, y: 6, is_black: true },
-        { x: 3, y: 6, is_black: true },
-        { x: 4, y: 6, is_black: true },
-        { x: 5, y: 6, is_black: true },
-        { x: 6, y: 6, is_black: true },
-        { x: 7, y: 6, is_black: true },
-        { x: 8, y: 6, is_black: true },
-        { x: 9, y: 6, is_black: true },
+  // --- 1. CREATE GAME ---
+  static async createCrossword(data: ICreateCrossword, user_id: string) {
+    const existing = await prisma.games.findFirst({
+      where: { name: data.name },
+      select: { id: true },
+    });
 
-        // --- BARIS 7 (KIMI) ---
-        { x: 0, y: 7, is_black: false, number: 3, value: undefined }, // Awal KIMI
-        { x: 1, y: 7, is_black: false, value: undefined },
-        { x: 2, y: 7, is_black: false, value: undefined },
-        { x: 3, y: 7, is_black: false, value: undefined },
-        { x: 4, y: 7, is_black: true },
-        { x: 5, y: 7, is_black: true },
-        { x: 6, y: 7, is_black: true },
-        { x: 7, y: 7, is_black: true },
-        { x: 8, y: 7, is_black: true },
-        { x: 9, y: 7, is_black: true },
+    if (existing) {
+      throw new ErrorResponse(
+        StatusCodes.BAD_REQUEST,
+        'Game name already exists',
+      );
+    }
 
-        // --- BARIS 8 (KOSONG) ---
-        { x: 0, y: 8, is_black: true },
-        { x: 1, y: 8, is_black: true },
-        { x: 2, y: 8, is_black: true },
-        { x: 3, y: 8, is_black: true },
-        { x: 4, y: 8, is_black: true },
-        { x: 5, y: 8, is_black: true },
-        { x: 6, y: 8, is_black: true },
-        { x: 7, y: 8, is_black: true },
-        { x: 8, y: 8, is_black: true },
-        { x: 9, y: 8, is_black: true },
+    this.validateGridIntegrity(data.words);
 
-        // --- BARIS 9 (KOSONG) ---
-        { x: 0, y: 9, is_black: true },
-        { x: 1, y: 9, is_black: true },
-        { x: 2, y: 9, is_black: true },
-        { x: 3, y: 9, is_black: true },
-        { x: 4, y: 9, is_black: true },
-        { x: 5, y: 9, is_black: true },
-        { x: 6, y: 9, is_black: true },
-        { x: 7, y: 9, is_black: true },
-        { x: 8, y: 9, is_black: true },
-        { x: 9, y: 9, is_black: true },
-      ],
-      clues: {
-        across: [
-          {
-            number: 1,
-            question: 'Orang Dengan Genetik Juara (ODGJ)',
-            answer: 'VERSTAPPEN',
-            length: 10,
-            start_x: 0,
-            start_y: 2,
-          },
-          {
-            number: 2,
-            question: 'Apa pengganti DRS di regulasi baru F1 2026?',
-            answer: 'MOM',
-            length: 3,
-            start_x: 7,
-            start_y: 4,
-          },
-          {
-            number: 3,
-            question: 'Bocil Mercedes pengganti Hamilton',
-            answer: 'KIMI',
-            length: 4,
-            start_x: 0,
-            start_y: 7,
-          },
-        ],
-        down: [
-          {
-            number: 4,
-            question: 'Menteri Pertahanan Meksiko (F1)',
-            answer: 'CHECO',
-            length: 5,
-            start_x: 8,
-            start_y: 0,
-          },
-          {
-            number: 5,
-            question:
-              'Jumat jumawa, sabtu belasungkawa, minggu entah kemana, senin mengheningkan cipta, selasa kecewa, rabu semakin terluka, kamis kembali percaya, adalah rundown dari tim?',
-            answer: 'FERRARI',
-            length: 7,
-            start_x: 1,
-            start_y: 1,
-          },
-          {
-            number: 6,
-            question: 'Team Principal yang mirip merek sanitasi Jepang',
-            answer: 'TOTO',
-            length: 4,
-            start_x: 4,
-            start_y: 2,
-          },
-        ],
+    const newGameId = uuidv4();
+    const templateId = await this.getGameTemplateId();
+
+    let thumbnailPath = '';
+
+    if (data.thumbnail_image) {
+      thumbnailPath = await FileManager.upload(
+        `game/crossword/${newGameId}`,
+        data.thumbnail_image,
+      );
+    }
+
+    const gameJson: ICrosswordJson = {
+      rows: data.rows,
+      cols: data.cols,
+      words: data.words.map(w => ({
+        id: uuidv4(),
+        number: w.number,
+        direction: w.direction,
+        row_index: w.row_index,
+        col_index: w.col_index,
+        answer: w.answer.toUpperCase(),
+        clue: w.clue,
+      })),
+    };
+
+    const newGame = await prisma.games.create({
+      data: {
+        id: newGameId,
+        game_template_id: templateId,
+        creator_id: user_id,
+        name: data.name,
+        description: data.description,
+        thumbnail_image: thumbnailPath,
+        is_published: data.is_publish_immediately,
+        game_json: gameJson as unknown as Prisma.InputJsonValue,
       },
+      select: { id: true },
+    });
+
+    return newGame;
+  }
+
+  // --- 2. UPDATE GAME ---
+  static async updateCrossword(
+    game_id: string,
+    data: IUpdateCrossword,
+    user_id: string,
+    user_role: ROLE,
+  ) {
+    const game = await prisma.games.findUnique({
+      where: { id: game_id },
+      select: {
+        id: true,
+        creator_id: true,
+        thumbnail_image: true,
+        game_json: true,
+        game_template: { select: { slug: true } },
+      },
+    });
+
+    if (!game || game.game_template.slug !== this.gameSlug) {
+      throw new ErrorResponse(StatusCodes.NOT_FOUND, 'Game not found');
+    }
+
+    if (user_role !== 'SUPER_ADMIN' && game.creator_id !== user_id) {
+      throw new ErrorResponse(
+        StatusCodes.FORBIDDEN,
+        'Unauthorized to update this game',
+      );
+    }
+
+    let newGameJson = game.game_json as unknown as ICrosswordJson;
+
+    // Jika user mengirim update grid (rows, cols, words harus dikirim sepaket)
+    if (data.words && data.rows && data.cols) {
+      this.validateGridIntegrity(data.words);
+
+      newGameJson = {
+        rows: data.rows,
+        cols: data.cols,
+        words: data.words.map(w => ({
+          id: uuidv4(),
+          number: w.number,
+          direction: w.direction,
+          row_index: w.row_index,
+          col_index: w.col_index,
+          answer: w.answer.toUpperCase(),
+          clue: w.clue,
+        })),
+      };
+    }
+
+    let thumbnailPath = game.thumbnail_image;
+
+    if (data.thumbnail_image) {
+      if (game.thumbnail_image) await FileManager.remove(game.thumbnail_image);
+      thumbnailPath = await FileManager.upload(
+        `game/crossword/${game_id}`,
+        data.thumbnail_image,
+      );
+    }
+
+    const updated = await prisma.games.update({
+      where: { id: game_id },
+      data: {
+        name: data.name,
+        description: data.description,
+        is_published: data.is_publish,
+        thumbnail_image: thumbnailPath,
+        game_json: newGameJson as unknown as Prisma.InputJsonValue,
+      },
+      select: { id: true },
+    });
+
+    return updated;
+  }
+
+  // --- 3. GET GAME DATA (PLAY) ---
+  static async getCrosswordPlay(
+    game_id: string,
+    is_public: boolean,
+    user_id?: string,
+    user_role?: ROLE,
+  ) {
+    const game = await prisma.games.findUnique({
+      where: { id: game_id },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        thumbnail_image: true,
+        is_published: true,
+        game_json: true,
+        creator_id: true,
+        game_template: { select: { slug: true } },
+      },
+    });
+
+    if (!game || game.game_template.slug !== this.gameSlug) {
+      throw new ErrorResponse(StatusCodes.NOT_FOUND, 'Game not found');
+    }
+
+    if (is_public && !game.is_published) {
+      throw new ErrorResponse(StatusCodes.FORBIDDEN, 'Game is not published');
+    }
+
+    if (
+      !is_public &&
+      user_role !== 'SUPER_ADMIN' &&
+      game.creator_id !== user_id
+    ) {
+      throw new ErrorResponse(StatusCodes.FORBIDDEN, 'Unauthorized access');
+    }
+
+    const fullJson = game.game_json as unknown as ICrosswordJson;
+
+    const playData: ICrosswordPlayData = {
+      rows: fullJson.rows,
+      cols: fullJson.cols,
+      words: fullJson.words.map(w => ({
+        id: w.id,
+        number: w.number,
+        direction: w.direction,
+        row_index: w.row_index,
+        col_index: w.col_index,
+        clue: w.clue,
+        length: w.answer.length,
+      })),
+    };
+
+    return {
+      ...game,
+      game_json: undefined,
+      ...playData,
     };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  validateAnswer(_payload: { x: number; y: number; char: string }) {
-    // TODO [BE-2]: Nanti Nanda isi ini
-    const isCorrect = true;
+  // --- 4. CHECK ANSWER ---
+  static async checkAnswer(game_id: string, data: ICheckCrosswordAnswer) {
+    const game = await prisma.games.findUnique({
+      where: { id: game_id },
+      select: { game_json: true, game_template: { select: { slug: true } } },
+    });
+
+    if (!game || game.game_template.slug !== this.gameSlug) {
+      throw new ErrorResponse(StatusCodes.NOT_FOUND, 'Game not found');
+    }
+
+    const gameJson = game.game_json as unknown as ICrosswordJson;
+    const correctAnswerMap = new Map<string, string>();
+
+    for (const w of gameJson.words) {
+      correctAnswerMap.set(w.id, w.answer);
+    }
+
+    const results = [];
+
+    for (const ans of data.answers) {
+      const correctWord = correctAnswerMap.get(ans.word_id);
+
+      if (!correctWord) {
+        results.push({
+          word_id: ans.word_id,
+          is_correct: false,
+          error: 'Word ID not found',
+        });
+        continue;
+      }
+
+      const isCorrect = correctWord === ans.user_answer.toUpperCase();
+
+      results.push({
+        word_id: ans.word_id,
+        is_correct: isCorrect,
+      });
+    }
 
     return {
-      is_correct: isCorrect,
-      message: isCorrect ? 'Mantap benar!' : 'Salah woy',
+      results,
     };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  finishGame(_payload: { time_spent: number; correct_count: number }) {
-    // TODO [BE-2]: Nanti Nanda isi ini
-    return {
-      message: 'Game Selesai',
-      score: 100,
-    };
+  // --- 5. DELETE GAME ---
+  static async deleteGame(game_id: string, user_id: string, user_role: ROLE) {
+    const game = await prisma.games.findUnique({
+      where: { id: game_id },
+      select: { id: true, creator_id: true, thumbnail_image: true },
+    });
+
+    if (!game) throw new ErrorResponse(StatusCodes.NOT_FOUND, 'Game not found');
+
+    if (user_role !== 'SUPER_ADMIN' && game.creator_id !== user_id) {
+      throw new ErrorResponse(StatusCodes.FORBIDDEN, 'Cannot delete this game');
+    }
+
+    if (game.thumbnail_image) {
+      await FileManager.remove(game.thumbnail_image);
+    }
+
+    await prisma.games.delete({ where: { id: game_id } });
+
+    return { id: game_id };
+  }
+
+  // --- HELPER ---
+  private static validateGridIntegrity(
+    words: {
+      answer: string;
+      direction: 'horizontal' | 'vertical';
+      row_index: number;
+      col_index: number;
+    }[],
+  ) {
+    const grid: Record<string, string> = {};
+
+    for (const word of words) {
+      const length = word.answer.length;
+
+      for (let index = 0; index < length; index++) {
+        const r =
+          word.direction === 'vertical'
+            ? word.row_index + index
+            : word.row_index;
+        const c =
+          word.direction === 'horizontal'
+            ? word.col_index + index
+            : word.col_index;
+        const char = word.answer[index].toUpperCase();
+        const key = `${r},${c}`;
+
+        if (grid[key] && grid[key] !== char) {
+          throw new ErrorResponse(
+            StatusCodes.BAD_REQUEST,
+            `Grid Conflict at [Row ${r}, Col ${c}]. Words intersecting here must share the same letter ('${grid[key]}' vs '${char}').`,
+          );
+        }
+
+        grid[key] = char;
+      }
+    }
   }
 }
