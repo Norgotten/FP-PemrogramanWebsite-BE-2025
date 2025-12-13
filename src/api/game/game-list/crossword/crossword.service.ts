@@ -271,6 +271,7 @@ export abstract class CrosswordService {
     }
 
     const results = [];
+    let correctCount = 0; // Hitung jumlah benar
 
     for (const ans of data.answers) {
       const correctWord = correctAnswerMap.get(ans.word_id);
@@ -286,13 +287,29 @@ export abstract class CrosswordService {
 
       const isCorrect = correctWord === ans.user_answer.toUpperCase();
 
+      if (isCorrect) {
+        correctCount++;
+      }
+
       results.push({
         word_id: ans.word_id,
         is_correct: isCorrect,
       });
     }
 
+    // Hitung total skor (0 - 100) berdasarkan jumlah soal yang ada di Game (bukan yang dikirim user)
+    const totalQuestions = gameJson.words.length;
+    const score =
+      totalQuestions > 0
+        ? Math.round((correctCount / totalQuestions) * 100)
+        : 0;
+
     return {
+      summary: {
+        total_questions: totalQuestions,
+        correct_count: correctCount,
+        score: score,
+      },
       results,
     };
   }
