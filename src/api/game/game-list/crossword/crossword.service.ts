@@ -123,16 +123,38 @@ export abstract class CrosswordService {
       );
     }
 
+    // --- VALIDASI TAMBAHAN (FIX) ---
+    // Cek apakah user mencoba update parsial pada Grid
+    const hasGridUpdate =
+      data.rows !== undefined ||
+      data.cols !== undefined ||
+      data.words !== undefined;
+
+    const isCompleteGridUpdate =
+      data.rows !== undefined &&
+      data.cols !== undefined &&
+      data.words !== undefined;
+
+    // Jika ada salah satu properti grid dikirim, tapi tidak lengkap, lempar Error
+    if (hasGridUpdate && !isCompleteGridUpdate) {
+      throw new ErrorResponse(
+        StatusCodes.BAD_REQUEST,
+        'Invalid Grid Update: If you want to update the grid layout, you MUST provide "rows", "cols", and "words" together.',
+      );
+    }
+    // --------------------------------
+
     let newGameJson = game.game_json as unknown as ICrosswordJson;
 
-    // Jika user mengirim update grid (rows, cols, words harus dikirim sepaket)
-    if (data.words && data.rows && data.cols) {
-      this.validateGridIntegrity(data.words);
+    // Jika user mengirim update grid lengkap
+    if (isCompleteGridUpdate) {
+      // TypeScript sekarang tahu data.words, rows, cols pasti ada (karena validasi di atas)
+      this.validateGridIntegrity(data.words!);
 
       newGameJson = {
-        rows: data.rows,
-        cols: data.cols,
-        words: data.words.map(w => ({
+        rows: data.rows!,
+        cols: data.cols!,
+        words: data.words!.map(w => ({
           id: uuidv4(),
           number: w.number,
           direction: w.direction,
@@ -144,6 +166,7 @@ export abstract class CrosswordService {
       };
     }
 
+    // ... sisa kode logic update image dan prisma update sama seperti sebelumnya
     let thumbnailPath = game.thumbnail_image;
 
     if (data.thumbnail_image) {
