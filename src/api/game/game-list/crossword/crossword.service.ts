@@ -296,6 +296,42 @@ export abstract class CrosswordService {
     return { id: game_id };
   }
 
+  // --- 6. READ DETAIL (Untuk Edit/Creator) ---
+  static async getCrosswordDetail(
+    game_id: string,
+    user_id: string,
+    user_role: ROLE,
+  ) {
+    const game = await prisma.games.findUnique({
+      where: { id: game_id },
+      select: {
+        id: true,
+        creator_id: true,
+        name: true,
+        description: true,
+        thumbnail_image: true,
+        is_published: true, // Penting untuk status di form edit
+        game_json: true,
+        game_template: { select: { slug: true } },
+      },
+    });
+
+    if (!game || game.game_template.slug !== this.gameSlug) {
+      throw new ErrorResponse(StatusCodes.NOT_FOUND, 'Game not found');
+    }
+
+    // Validasi Akses: Hanya Creator atau Super Admin yang boleh lihat kunci jawaban
+    if (user_role !== 'SUPER_ADMIN' && game.creator_id !== user_id) {
+      throw new ErrorResponse(
+        StatusCodes.FORBIDDEN,
+        'Unauthorized to view game details',
+      );
+    }
+
+    // Return full game data (termasuk answer di dalam game_json)
+    return game;
+  }
+
   // --- HELPER ---
   private static validateGridIntegrity(
     words: {

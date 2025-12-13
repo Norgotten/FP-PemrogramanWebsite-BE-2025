@@ -50,6 +50,36 @@ export const CrosswordController = Router()
     },
   )
 
+  // GET DETAIL (Khusus Creator - CRUD Read)
+  .get(
+    '/:game_id',
+    validateAuth({}),
+    async (
+      request: AuthedRequest<{ game_id: string }>,
+      response_: Response,
+      next: NextFunction,
+    ) => {
+      try {
+        const result = await CrosswordService.getCrosswordDetail(
+          request.params.game_id,
+          request.user!.user_id,
+          request.user!.role,
+        );
+        const successResponse = new SuccessResponse(
+          StatusCodes.OK,
+          'Game details retrieved',
+          result,
+        );
+
+        return response_
+          .status(successResponse.statusCode)
+          .json(successResponse.json());
+      } catch (error) {
+        return next(error);
+      }
+    },
+  )
+
   // PLAY (Public)
   .get(
     '/:game_id/play/public',
